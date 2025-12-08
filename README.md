@@ -1,16 +1,114 @@
-# React + Vite
+# Task Manager API
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack task management application built with Node.js/Express backend and React frontend, allowing caseworkers to create and track tasks, stored in a sqlite database with validation and unit testing.
 
-Currently, two official plugins are available:
+# 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Installation & Setup
 
-## React Compiler
+### Backend
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+```bash
+cd backend
+npm install
+npm run dev
+# API Server runs on http://localhost:8080
+```
 
-## Expanding the ESLint configuration
+### Frontend
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+cd frontend
+npm install
+npm run dev
+# Frontend App runs on http://localhost:5173
+```
+
+# 🧪 Running Tests
+
+```bash
+cd backend
+npm test
+```
+
+Note: During development, the backend uses a file-based SQLite database (tasks.db) while tests use an in-memory database for isolation.
+
+# API Endpoints
+
+## GET /
+
+Health check endpoint
+
+### Response:
+
+```json
+{
+    "success": true,
+    "data": "Hello World"
+}
+```
+
+## GET /tasks
+
+Get all tasks from the database
+
+### Response:
+
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "title": "Task title",
+            "description": "Optional description",
+            "status": 0,
+            "due": "2024-12-31T14:30"
+        }
+    ]
+}
+```
+
+## POST /tasks
+
+Add a task to the database.
+
+### Request body:
+
+```json
+{
+    "title": "Task title", // REQUIRED - string
+    "description": "Description", // OPTIONAL - string
+    "status": 0, // OPTIONAL - 0 (pending) or 1 (completed)
+    "due": "2024-12-31T14:30" // REQUIRED - Future datetime in YYYY-MM-DDTHH:mm format
+}
+```
+
+### Response:
+
+```json
+{
+    "success": true,
+    "data": {
+        "id": 1,
+        "title": "Task title",
+        "description": "Description",
+        "status": 0,
+        "due": "2024-12-31T14:30"
+    }
+}
+```
+
+## Error responses:
+
+Missing title: `{"success": false, "message": "Title is required"} `
+
+Missing due date: `{"success": false, "message": "Due date/time is required"}`
+
+Past due date: `{"success": false, "message": "Due date/time must be in the future"}`
+
+Invalid date format: `{"success": false, "message": "Invalid date format. Use YYYY-MM-DDTHH:mm"}`
+
+## License
+
+For DTS Developer Technical Test - Junior Software Developer role application
