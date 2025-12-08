@@ -1,38 +1,38 @@
 const express = require("express");
+const cors = require("cors"); // Add this line
 const sqlite3 = require("sqlite3").verbose();
 const { open } = require("sqlite");
 const SQL = require("sql-template-strings");
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cors());
 
 async function openDb(dbName) {
-    return open({
-        filename: dbName,
+    const filename =
+        process.env.NODE_ENV === "test"
+            ? ":memory:" // In-memory DB for tests
+            : dbName; // File DB for development
+
+    const db = await open({
+        filename: filename,
         driver: sqlite3.Database,
     });
+
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS tasks(
+            id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status INTEGER,
+            due TEXT NOT NULL
+        )
+    `);
+
+    return db;
 }
 
-(async function () {
-    let db;
-    try {
-        db = await openDb("./backend/tasks.db");
-        // const drop = "DROP TABLE IF EXISTS tasks";
-        // let result = await db.exec(drop);
-        const query = `CREATE TABLE IF NOT EXISTS tasks(
-    id INTEGER PRIMARY KEY,
-    title TEXT NOT NULL,
-    description TEXT,
-    status INTEGER,
-    due TEXT NOT NULL)`;
-        result = await db.exec(query);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        db.close();
-    }
-})();
-
+//test route, hello world
 app.route("/").get(function (req, res) {
     return res.status(200).json({
         success: true,
@@ -44,7 +44,7 @@ app.route("/").get(function (req, res) {
 app.route("/tasks").get(async function (req, res) {
     let db;
     try {
-        db = await openDb("./backend/tasks.db");
+        db = await openDb("./tasks.db");
         let result = await db.all(`SELECT * FROM tasks`);
         return res.status(200).json({
             success: true,
@@ -62,12 +62,39 @@ app.route("/tasks").get(async function (req, res) {
     }
 });
 
-// POST new tasks to the database
+// POST new task to the database
 app.route("/tasks").post(async function (req, res) {
     let db;
     try {
-        db = await openDb("./backend/tasks.db");
+        db = await openDb("./tasks.db");
         const { title, description, status, due } = req.body;
+        //validate the requests
+        if (!title || title.trim() === "") {
+            return res.status(400).json({
+                success: false,
+                message: "Title is required",
+            });
+        }
+        if (!due) {
+            return res.status(400).json({
+                success: false,
+                message: "Due date/ time is required",
+            });
+        }
+        const dueDate = new Date(due);
+        const now = new Date();
+        if (isNaN(dueDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid date format. Use YYYY-MM-DDTHH:mm",
+            });
+        }
+        if (dueDate <= now) {
+            return res.status(400).json({
+                success: false,
+                message: "Due date/time must be in the future",
+            });
+        }
         // add new task to database
         let addTask = SQL`INSERT INTO tasks(title,description,status,due) VALUES(${title},${description},${status},${due})`;
         let resultAdd = await db.run(addTask);
@@ -90,22 +117,7 @@ app.route("/tasks").post(async function (req, res) {
     }
 });
 
-async function clearDB() {
-    let db;
-    try {
-        db = await openDb("./backend/tasks.db");
-        await db.exec("DELETE FROM tasks");
-        const remainingTasks = await db.all("SELECT * FROM tasks");
-        return remainingTasks.length === 0;
-    } catch (err) {
-        console.log(err);
-        return false;
-    } finally {
-        db.close();
-    }
-}
-
-module.exports = { app, clearDB };
+module.exports = { app };
 
 if (require.main === module) {
     app.listen(8080, function () {

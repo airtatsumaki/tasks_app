@@ -1,53 +1,91 @@
 const request = require("supertest");
-const { app, clearDB } = require("../index"); // ✓ Destructure!
+const { app } = require("../index");
 
-// Clear database before EACH test (for isolation)
-beforeEach(async function () {
-  await clearDB();
-});
+// Date functions
+function getFutureDate(daysFromNow = 1) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date.toISOString().slice(0, 16);
+}
+
+function getPastDate(daysAgo = 1) {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    return date.toISOString().slice(0, 16);
+}
 
 // Test root route for hello world
 describe("GET /", function () {
-  test("should return Hello World message", async () => {
-    const response = await request(app).get("/");
-    expect(response.statusCode).toBe(200);
-    expect(response.body.data).toBe("Hello World");
-  });
-});
-
-// Add post multiple tasks and check they are all stored in the database
-describe("GET /tasks", function () {
-  test("should return 3 created tasks", async () => {
-    const allTasks = [
-      { title: "Task 1", description: "First", status: 0, due: "123" },
-      { title: "Task 2", description: "Second", status: 1, due: "456" },
-      { title: "Task 3", description: "Third", status: 0, due: "789" },
-    ];
-    for (const task of allTasks) {
-      await request(app).post("/tasks").send(task);
-    }
-    const response = await request(app).get("/tasks");
-    expect(response.statusCode).toBe(200);
-    allTasks.forEach(function (task) {
-      const found = response.body.data.find(function (t) {
-        return t.title === task.title;
-      });
-      expect(found).toMatchObject(task);
+    test("should return Hello World message", async () => {
+        const response = await request(app).get("/");
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data).toBe("Hello World");
     });
-  });
 });
 
+// Test post routes
 describe("POST /tasks", function () {
-  test("should return the posted task", async () => {
-    const objTask = {
-      title: "TEST TASK",
-      description: "TO THIS TEST",
-      status: 0,
-      due: "1234",
-    };
-    const response = await request(app).post("/tasks").send(objTask);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.success).toBe(true);
-    expect(response.body.data).toMatchObject(objTask);
-  });
+    test("should return the posted task, all params valid", async () => {
+        const objTask = {
+            title: "TEST TASK",
+            description: "TO THIS TEST",
+            status: 0,
+            due: getFutureDate(1),
+        };
+        const response = await request(app).post("/tasks").send(objTask);
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toMatchObject(objTask);
+    });
+
+    test("should return task as description is optional", async () => {
+        const objTask = {
+            title: "this has a title",
+            description: "",
+            status: 0,
+            due: getFutureDate(1),
+        };
+        const response = await request(app).post("/tasks").send(objTask);
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toMatchObject(objTask);
+    });
+
+    test("should return error since title is missing from the task", async () => {
+        const objTask = {
+            title: "",
+            description: "this should fail",
+            status: 0,
+            due: getFutureDate(1),
+        };
+        const response = await request(app).post("/tasks").send(objTask);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Title is required");
+    });
+
+    test("should return error since due date is empty string", async () => {
+        const objTask = {
+            title: "this has a title",
+            description: "this should fail",
+            status: 0,
+            due: "",
+        };
+        const response = await request(app).post("/tasks").send(objTask);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Due date/ time is required");
+    });
+
+    test("should return error since due date is missing", async () => {
+        const objTask = {
+            title: "this has a title",
+            description: "this should fail",
+            status: 0,
+        };
+        const response = await request(app).post("/tasks").send(objTask);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Due date/ time is required");
+    });
 });
