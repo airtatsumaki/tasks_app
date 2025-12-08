@@ -1,0 +1,24 @@
+{
+    "name": "dts-developer-challenge-junior",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "node --watch ./backend/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^1.13.2",
+        "express": "^5.2.1",
+        "sql-template-strings": "^2.2.2",
+        "sqlite": "^5.1.1",
+        "sqlite3": "^5.1.7"
+    },
+    "devDependencies": {
+        "jest": "^30.2.0",
+        "supertest": "^7.1.4"
+    }
+}
