@@ -80,7 +80,7 @@ Add a task to the database.
     "title": "Task title", // REQUIRED - string
     "description": "Description", // OPTIONAL - string
     "status": 0, // OPTIONAL - 0 (pending) or 1 (completed)
-    "due": "2024-12-31T14:30" // REQUIRED - Future datetime in YYYY-MM-DDTHH:mm format
+    "due": "2024-12-31T14:30" // REQUIRED - Future datetime in YYYY-MM-DDThh:mm format
 }
 ```
 
