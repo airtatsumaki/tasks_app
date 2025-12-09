@@ -9,8 +9,8 @@ A full-stack task management application built with Node.js/Express backend and 
 ### Backend
 
 ```bash
-cd backend
 npm install
+cd backend
 npm run dev
 # API Server runs on http://localhost:8080
 ```
